@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        KoebutaSlayer
-// @namespace   Albireo
+// @namespace   albno273
 // @description 声優へのクソリプを消します。
 // @include     https://twitter.com/*
 // @version     1.0.0
