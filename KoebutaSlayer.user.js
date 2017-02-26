@@ -31,7 +31,15 @@ $(function () {
   // element
   const remove = $("<button>")
     .text("【クソリプを非表示にする！】")
-    .css({"color": "Maroon"})
+    .css({"color": "Red"})
+    .hover(
+      function () {
+        $(this).css({"color": "Maroon"});
+      },
+      function () {
+        $(this).css({"color": "Red"});
+      }
+    )
     .on("click", () => {
       removeKsrp();
     });
