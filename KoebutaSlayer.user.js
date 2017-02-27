@@ -3,7 +3,7 @@
 // @namespace   albno273
 // @description 声優へのクソリプを抹殺します。
 // @include     https://twitter.com/*
-// @version     1.1.0
+// @version     1.2.0
 // @grant       none
 // @require     https://code.jquery.com/jquery-3.1.0.min.js
 // ==/UserScript==
