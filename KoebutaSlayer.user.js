@@ -4,7 +4,7 @@
 // @description    Adds a button that eliminates evil replys to tweet details.
 // @description:ja ツイート詳細に声豚のリプライを抹殺するボタンを追加します。
 // @include        https://twitter.com/*
-// @version        2.0.0
+// @version        2.0.1
 // @require        https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @grant          GM_getValue
 // @grant          GM_setValue
@@ -186,23 +186,31 @@ GM_config.init(
         for (let j = 0; j < tweets.length; j++) {
           const tweet    = tweets[j];
           const from     = tweet.getAttribute('data-screen-name');
-          const to       = tweet.getAttribute('data-mentions').split(/ /);
-          to.forEach((value, index, array) => {
-            if (wl.indexOf(from) == -1 && wl.indexOf(value) >= 0) {
-              if(behavior == '非表示にする') {
-                tweet.style.display = 'none';
-              } else if(behavior == 'ニンジャスレイヤー風') {
-                tweet.getElementsByClassName('tweet-text')[0].textContent = 'アバーッ！';
-                tweet.getElementsByClassName('fullname')[0].textContent   = 'Koebuta Slayer';
-                tweet.getElementsByClassName('username')[0].innerHTML     = '<s>@</s><b>koebutaslayer</b>';
-                tweet.getElementsByClassName('js-action-profile-avatar')[0]
-                  .setAttribute('src', 'https://pbs.twimg.com/profile_images/716042850903830528/PLNG3AVA.jpg');
-                if(tweet.getElementsByClassName('AdaptiveMediaOuterContainer')[0])
-                  tweet.getElementsByClassName('AdaptiveMediaOuterContainer')[0].remove();
+          const toChk    = tweet.getAttribute('data-mentions');
+          if(toChk == null)
+            slay();
+          else {
+            to = toChk.split(' ');
+            to.forEach((value, index, array) => {
+              if (wl.indexOf(from) == -1 && wl.indexOf(value) >= 0) {
+                slay();
               }
-              slayCountAfterExec++;
+            });
+          }
+          function slay() {
+            if(behavior == '非表示にする') {
+              tweet.style.display = 'none';
+            } else if(behavior == 'ニンジャスレイヤー風') {
+              tweet.getElementsByClassName('tweet-text')[0].textContent = 'アバーッ！';
+              tweet.getElementsByClassName('fullname')[0].textContent   = 'Koebuta Slayer';
+              tweet.getElementsByClassName('username')[0].innerHTML     = '<s>@</s><b>koebutaslayer</b>';
+              tweet.getElementsByClassName('js-action-profile-avatar')[0]
+                .setAttribute('src', 'https://pbs.twimg.com/profile_images/716042850903830528/PLNG3AVA.jpg');
+              if(tweet.getElementsByClassName('AdaptiveMediaOuterContainer')[0])
+                tweet.getElementsByClassName('AdaptiveMediaOuterContainer')[0].remove();
             }
-          });
+            slayCountAfterExec++;
+          }
         }
       }
     }
