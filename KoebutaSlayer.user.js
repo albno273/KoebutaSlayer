@@ -4,8 +4,7 @@
 // @description    Adds a button that eliminates evil replys to tweet details.
 // @description:ja ツイート詳細に声豚のリプライを抹殺するボタンを追加します。
 // @include        https://twitter.com/*
-// @version        1.2.1
-// @require        https://code.jquery.com/jquery-3.1.0.min.js
+// @version        2.0.0
 // @require        https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @grant          GM_getValue
 // @grant          GM_setValue
@@ -70,7 +69,7 @@ GM_config.init(
   }
 );
 
-$(() => {
+(() => {
 
   const processedLists       = new WeakMap();
   const processedConfigLists = new WeakMap();
@@ -80,144 +79,142 @@ $(() => {
 
   // 抹殺ボタンを作る
   const createSlayer = (tweetLists) => {
-    const slayer = $('<div>')
-      .attr('class', 'ProfileTweet-action js-toggleState ProfileTweet-action--Slay')
-      .html('<button class="ProfileTweet-actionButton js-actionButton js-actionSlay" type="button">' +
-              '<div class="IconContainer js-tooltip" title="抹殺">' +
-                '<span class="Icon Icon--close"></span>' +
-                '<span class="u-hiddenVisually">抹殺</span>' +
-              '</div>' +
-              '<div class="IconTextContainer">' +
-                '<span class="ProfileTweet-actionCount ">' +
-                  '<span class="ProfileTweet-actionCountForPresentation Slay-counter" aria-hidden="true">0</span>' +
-                '</span>' +
-               '</div>' +
-            '</button>')
-      .hover(
-        (ev) => {
-          $(ev.currentTarget).find('.Icon')[0].style.color         = 'darkred';
-          $(ev.currentTarget).find('.Slay-counter')[0].style.color = 'darkred';
-        },
-        (ev) => {
-          $(ev.currentTarget).find('.Icon')[0].style.color         = '';
-          $(ev.currentTarget).find('.Slay-counter')[0].style.color = '';
-        }
-      )
-      .on('click',
-        () => {
-          slayTweet(tweetLists);
-          // 抹殺数が増えた時だけ
-          if(slayCountAfterExec != 0)
-            recordCount();
-        }
-      );
+    const slayer = document.createElement('div');
+    slayer.setAttribute('class', 'ProfileTweet-action js-toggleState ProfileTweet-action--Slay');
+    slayer.innerHTML =
+    '<button class="ProfileTweet-actionButton js-actionButton js-actionSlay" type="button">' +
+      '<div class="IconContainer js-tooltip" title="抹殺">' +
+        '<span class="Icon Icon--close"></span>' +
+        '<span class="u-hiddenVisually">抹殺</span>' +
+      '</div>' +
+      '<div class="IconTextContainer">' +
+        '<span class="ProfileTweet-actionCount ">' +
+          '<span class="ProfileTweet-actionCountForPresentation Slay-counter" aria-hidden="true"></span>' +
+        '</span>' +
+      '</div>' +
+    '</button>';
+    slayer.addEventListener('mouseenter', (ev) => {
+      const icon = slayer.getElementsByClassName('Icon')[0];
+      const counter = slayer.getElementsByClassName('Slay-counter')[0];
+      icon.style.color    = 'darkred';
+      counter.style.color = 'darkred';
+    });
+    slayer.addEventListener('mouseleave', (ev) => {
+      const icon = slayer.getElementsByClassName('Icon')[0];
+      const counter = slayer.getElementsByClassName('Slay-counter')[0];
+      if(counter.textContent == '') {
+        icon.style.color    = '';
+        counter.style.color = '';
+      }
+    });
+    slayer.addEventListener('click', () => {
+      slayTweet(tweetLists);
+      // 抹殺数が増えた時だけ
+      if(slayCountAfterExec != 0)
+        recordCount();
+    });
     return slayer;
-  }
+  };
 
   // 抹殺ボタンを追加
   const addSlayer = () => {
-    const lists = $('.ProfileTweet-actionList');
+    const lists = document.getElementsByClassName('ProfileTweet-actionList');
     for (let i = 0; i < lists.length; i++) {
-      const list = lists.eq(i);
-      if(processedLists.has(list[0]))
+      const list = lists[i];
+      if(processedLists.has(list))
         continue;
       else {
         // 画面遷移前のボタンが残った時に削除
-        const oldSlayer = list.find('.ProfileTweet-action--Slay');
-        if(oldSlayer.length > 0)
-          oldSlayer.eq(0).remove();
-        // TODO: parent() 連打をやめたい
+        const oldSlayer = list.getElementsByClassName('ProfileTweet-action--Slay')[0];
+        if(oldSlayer)
+          oldSlayer.parentNode.removeChild(oldSlayer);
+        // TODO: parentNode 連打をやめたい
         // ツイート詳細欄にのみボタンを登録
-        if(list.parent().parent().parent().hasClass('permalink-tweet-container')) {
-          processedLists.set(list[0], 1);
+        if(list.parentNode.parentNode.parentNode.classList.contains('permalink-tweet-container')) {
+          processedLists.set(list, 1);
           const slayer = createSlayer(lists);
-          list.append(slayer);
+          list.appendChild(slayer);
         }
       }
     }
   };
 
   // 設定ボタンを作る
-  const createSlayerConfig = () => {
-    const config = $('<li>')
-      .attr('class', 'moments js-moments-tab')
-      .html('<a role="button" href="#" class="js-nav js-tooltip js-dynamic-tooltip" ' +
-            'data-component-context="moments_nav" data-nav="moments" data-placement="bottom">' +
-              '<span class="Icon Icon--close Icon--large"></span>' +
-              '<span class="text">抹殺設定</span>'+
-            '</a>')
-      .on('click', () => { GM_config.open(); });
+  const createConfig = () => {
+    const config = document.createElement('li');
+    config.setAttribute('class', 'moments js-moments-tab');
+    config.innerHTML =
+    '<a role="button" href="#" class="js-nav js-tooltip js-dynamic-tooltip" ' +
+    'data-component-context="moments_nav" data-nav="moments" data-placement="bottom">' +
+      '<span class="Icon Icon--close Icon--large"></span>' +
+      '<span class="text">抹殺設定</span>'+
+    '</a>';
+    config.addEventListener('click', () => { GM_config.open(); });
     return config;
-  }
+  };
 
   // 設定ボタンを追加
-  const addSlayerConfig = () => {
-    const lists = $('.js-global-actions');
+  const addConfig = () => {
+    const lists = document.getElementsByClassName('js-global-actions');
     for (let i = 0; i < lists.length; i++) {
-      const list = lists.eq(i);
-      if(processedConfigLists.has(list[0]))
+      const list = lists[i];
+      if(processedConfigLists.has(list))
         continue;
       else {
         // 画面遷移前のボタンが残った時に削除
-        const oldSlayerConfig = list.find('.ProfileTweet-action--Slay--config');
-        if(oldSlayerConfig.length > 0)
-          oldSlayerConfig.eq(0).remove();
+        const oldConfig = list.getElementsByClassName('ProfileTweet-action--Slay--config')[0];
+        if(oldConfig)
+          oldConfig.parentNode.removeChild(oldConfig);
         // 登録
-        processedConfigLists.set(list[0], 1);
-        const slayerConfig = createSlayerConfig();
-        list.append(slayerConfig);
+        processedLists.set(list, 1);
+        const config = createConfig();
+        list.appendChild(config);
       }
     }
   };
 
   // ツイートを抹殺
   const slayTweet = (tweetLists) => {
-    // 画面遷移前のツイートも含まれるのでリプライのみ抽出
-    const tweet = tweetLists.parents().find('.permalink-descendant-tweet');
-    if (tweet.length > 0) {
-      const wl = GM_config.get('whitelist').split('\n');
-      tweet.each((index, element) => {
-        const from     = $(element).attr('data-screen-name');
-        const to       = $(element).attr('data-mentions').split(/ /);
-        const behavior = GM_config.get('slayBehavior');
-        to.forEach((value, index, array) => {
-          if (wl.indexOf(from) == -1 && wl.indexOf(value) >= 0) {
-            if(behavior == '非表示にする') {
-              $(element).css('display', 'none');
-            } else if(behavior == 'ニンジャスレイヤー風') {
-              $(element).find('.tweet-text').text('アバーッ！');
-              $(element).find('.fullname').text('Koebuta Slayer');
-              $(element).find('.username').html(' <s>@</s><b>koebutaslayer</b>');
-              $(element).find('.js-action-profile-avatar')
-                .attr('src', 'https://pbs.twimg.com/profile_images/716042850903830528/PLNG3AVA.jpg');
-              $(element).find('.AdaptiveMediaOuterContainer').remove();
+    const behavior = GM_config.get('slayBehavior');
+    const wl       = GM_config.get('whitelist').split('\n');
+    for (let i = 0; i < tweetLists.length; i++) {
+      const list = tweetLists[i];
+      // 画面遷移前のツイートも含まれるのでリプライのみ抽出
+      // TODO: parentsNode 連打やめたい
+      const tweets = list.parentNode.parentNode.parentNode.parentNode.getElementsByClassName('permalink-descendant-tweet');
+      if(tweets) {
+        for (let j = 0; j < tweets.length; j++) {
+          const tweet    = tweets[j];
+          const from     = tweet.getAttribute('data-screen-name');
+          const to       = tweet.getAttribute('data-mentions').split(/ /);
+          to.forEach((value, index, array) => {
+            if (wl.indexOf(from) == -1 && wl.indexOf(value) >= 0) {
+              if(behavior == '非表示にする') {
+                tweet.style.display = 'none';
+              } else if(behavior == 'ニンジャスレイヤー風') {
+                tweet.getElementsByClassName('tweet-text')[0].textContent = 'アバーッ！';
+                tweet.getElementsByClassName('fullname')[0].textContent   = 'Koebuta Slayer';
+                tweet.getElementsByClassName('username')[0].innerHTML     = '<s>@</s><b>koebutaslayer</b>';
+                tweet.getElementsByClassName('js-action-profile-avatar')[0]
+                  .setAttribute('src', 'https://pbs.twimg.com/profile_images/716042850903830528/PLNG3AVA.jpg');
+                if(tweet.getElementsByClassName('AdaptiveMediaOuterContainer')[0])
+                  tweet.getElementsByClassName('AdaptiveMediaOuterContainer')[0].remove();
+              }
+              slayCountAfterExec++;
             }
-            slayCountAfterExec++;
-          }
-        });
-      });
+          });
+        }
+      }
     }
   }
 
   // 抹殺したツイート数をお知らせ
   const recordCount = () => {
-    $('.Slay-counter').text(slayCountAfterExec);
-    if(slayCountAfterExec - slayCountBeforeExec != 0) {
-      blinkCounter();
+    const counter = document.getElementsByClassName('Slay-counter')[0];
+    counter.textContent = slayCountAfterExec;
+    if(slayCountAfterExec - slayCountBeforeExec != 0)
       slayCountBeforeExec = slayCountAfterExec;
-    }
     slayCountAfterExec = 0;
-  }
-
-  // 抹殺数更新の時に点滅させる
-  const blinkCounter = () => {
-    let blinkCount = 0;
-    const blink = setInterval(() => {
-      $('.Slay-counter').fadeOut(150).fadeIn(150);
-      blinkCount++;
-      if (blinkCount >= 5)
-        clearInterval(blink);
-    }, 50);
   }
 
   // DOMの更新が入るたびにボタンを追加
@@ -243,6 +240,6 @@ $(() => {
 
   // 初回起動
   addSlayer();
-  addSlayerConfig();
+  addConfig();
 
-});
+}) ();
