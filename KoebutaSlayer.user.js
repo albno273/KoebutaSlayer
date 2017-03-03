@@ -4,7 +4,7 @@
 // @description    Adds a button that eliminates evil replys to tweet details.
 // @description:ja ツイート詳細に声豚のリプライを抹殺するボタンを追加します。
 // @include        https://twitter.com/*
-// @version        2.0.2
+// @version        2.0.3
 // @require        https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @grant          GM_getValue
 // @grant          GM_setValue
@@ -12,7 +12,7 @@
 // @license        MIT License
 // ==/UserScript==
 
-// 仕様スクリプト: GM config
+// 使用スクリプト: GM config
 // https://openuserjs.org/src/libs/sizzle/GM_config.js
 // 参考: Extract images for Twitter
 // https://greasyfork.org/ja/scripts/15271-extract-images-for-twitter
@@ -71,10 +71,10 @@ GM_config.init(
 
 (() => {
 
-  const processedList       = new WeakMap();
+  const processedList      = new WeakMap(),
+        processedTweetList = new WeakMap();
 
-  let slayCountBeforeExec = 0; // ツイート抹殺数(起動前)
-  let slayCountAfterExec  = 0; // ツイート抹殺数(起動後)
+  let slayCount = 0; // ツイート抹殺数
 
   // 抹殺ボタンを作る
   const createSlayer = (tweetList) => {
@@ -92,15 +92,13 @@ GM_config.init(
         '</span>' +
       '</div>' +
     '</button>';
+    const icon    = slayer.getElementsByClassName('Icon')[0],
+          counter = slayer.getElementsByClassName('Slay-counter')[0];
     slayer.addEventListener('mouseenter', () => {
-      const icon    = slayer.getElementsByClassName('Icon')[0];
-      const counter = slayer.getElementsByClassName('Slay-counter')[0];
       icon.style.color    = 'darkred';
       counter.style.color = 'darkred';
     });
     slayer.addEventListener('mouseleave', () => {
-      const icon    = slayer.getElementsByClassName('Icon')[0];
-      const counter = slayer.getElementsByClassName('Slay-counter')[0];
       if(counter.textContent == '') {
         icon.style.color    = '';
         counter.style.color = '';
@@ -108,9 +106,12 @@ GM_config.init(
     });
     slayer.addEventListener('click', () => {
       slayTweet(tweetList);
-      // 抹殺数が増えた時だけ
-      if(slayCountAfterExec != 0)
-        recordCount();
+      if(slayCount != 0) {
+        // 抹殺したツイート数を更新
+        setTimeout(() => {
+          document.getElementsByClassName('Slay-counter')[0].textContent = slayCount;
+        }, 500);
+      }
     });
     return slayer;
   };
@@ -118,20 +119,23 @@ GM_config.init(
   // 抹殺ボタンを追加
   const addSlayer = () => {
     const tweetList = document.getElementsByClassName('ProfileTweet-actionList');
-    for (let i = 0; i < tweetList.length; i++) {
+    for (let i = 0, len = tweetList.length; i < len; i++) {
       const tweet = tweetList[i];
-      if(processedList.has(tweet))
-        continue;
-      else {
+      if(!processedList.has(tweet)) {
         // 画面遷移前のボタンが残った時に削除
         const oldSlayer = tweet.getElementsByClassName('ProfileTweet-action--Slay')[0];
         if(oldSlayer)
           oldSlayer.remove();
-        // ツイート詳細欄にのみボタンを登録
+        // ホワイトリストに入ってるアカウントのツイートの詳細欄にのみボタンを登録
         // TODO: parentNode 連打やめたい
-        if(tweet.parentNode.parentNode.parentNode.classList.contains('permalink-tweet-container')) {
-          processedList.set(tweet, 1);
-          tweet.appendChild(createSlayer(tweetList));
+        const tweetGGparent = tweet.parentNode.parentNode.parentNode,
+              wl            = GM_config.get('whitelist').split('\n'),
+              id            = /@(\w+)/g.exec(tweetGGparent.innerText)[1];
+        if(tweetGGparent.classList.contains('permalink-tweet-container')) {
+          if(wl.indexOf(id) >= 0) {
+            processedList.set(tweet, 1);
+            tweet.appendChild(createSlayer(tweetList));
+          }
         }
       }
     }
@@ -154,11 +158,9 @@ GM_config.init(
   // 設定ボタンを追加
   const addConfig = () => {
     const navList = document.getElementsByClassName('js-global-actions');
-    for (let i = 0; i < navList.length; i++) {
+    for (let i = 0, len = navList.length; i < len; i++) {
       const nav = navList[i];
-      if(processedList.has(nav))
-        continue;
-      else {
+      if(!processedList.has(nav)) {
         // 画面遷移前のボタンが残った時に削除
         const oldConfig = nav.getElementsByClassName('ProfileTweet-action--Slay--config')[0];
         if(oldConfig)
@@ -172,30 +174,33 @@ GM_config.init(
 
   // ツイートを抹殺
   const slayTweet = (tweetList) => {
-    const behavior = GM_config.get('slayBehavior');
-    const wl       = GM_config.get('whitelist').split('\n');
-    for (let i = 0; i < tweetList.length; i++) {
+    const behavior = GM_config.get('slayBehavior'),
+          wl       = GM_config.get('whitelist').split('\n');
+    for (let i = 0, len = tweetList.length; i < len; i++) {
       // 画面遷移前のツイートも含まれるのでリプライのみ抽出
       // TODO: parentsNode 連打やめたい
       const tweets = tweetList[i].parentNode.parentNode.parentNode.parentNode
         .getElementsByClassName('permalink-descendant-tweet');
       if(tweets.length == 1) {
-        const tweet    = tweets[0];
-        const from     = tweet.getAttribute('data-screen-name');
-        const to       = tweet.getAttribute('data-mentions');
-        // チェインはされてるけど @id が明記されていない場合
-        if(wl.indexOf(from) == -1 && to == null)
-          slay(behavior, tweet);
-        else {
-          const toArr = to.split(' ');
-          toArr.forEach((value, index, array) => {
-            if (wl.indexOf(from) == -1 && wl.indexOf(value) >= 0)
-              slay(behavior, tweet);
-          });
+        const tweet    = tweets[0],
+              from     = tweet.getAttribute('data-screen-name'),
+              to       = tweet.getAttribute('data-mentions');
+        if(!processedTweetList.has(tweet)) {
+          // チェインはされてるけど @id が明記されていない場合
+          if(wl.indexOf(from) == -1 && to == null)
+            slay(behavior, tweet);
+          else {
+            const toArr = to.split(' ');
+            toArr.forEach((value, index, array) => {
+              if (wl.indexOf(from) == -1 && wl.indexOf(value) >= 0)
+                slay(behavior, tweet);
+            });
+          }
         }
       }
     }
-  }
+  };
+
   const slay = (behavior, tweet) => {
     if(behavior == '非表示にする')
        tweet.style.display = 'none';
@@ -205,19 +210,12 @@ GM_config.init(
       tweet.getElementsByClassName('username')[0].innerHTML     = '<s>@</s><b>koebutaslayer</b>';
       tweet.getElementsByClassName('js-action-profile-avatar')[0]
         .setAttribute('src', 'https://pbs.twimg.com/profile_images/716042850903830528/PLNG3AVA.jpg');
-      if(tweet.getElementsByClassName('AdaptiveMediaOuterContainer')[0])
-        tweet.getElementsByClassName('AdaptiveMediaOuterContainer')[0].remove();
+      const media = tweet.getElementsByClassName('AdaptiveMediaOuterContainer')[0];
+      if(media)
+        media.remove();
     }
-    slayCountAfterExec++;
-  }
-
-  // 抹殺したツイート数をお知らせ
-  const recordCount = () => {
-    const counter = document.getElementsByClassName('Slay-counter')[0];
-    counter.textContent = slayCountAfterExec;
-    if(slayCountAfterExec - slayCountBeforeExec != 0)
-      slayCountBeforeExec = slayCountAfterExec;
-    slayCountAfterExec = 0;
+    processedTweetList.set(tweet, 1);
+    slayCount++;
   }
 
   // DOMの更新が入るたびにボタンを追加
@@ -228,11 +226,11 @@ GM_config.init(
       childList: true,
       subtree: true
     };
-    const DOMObserver = new MutationObserver(function () {
+    const DOMObserver = new MutationObserver(() => {
       if (DOMObserverTimer !== 'false') {
         clearTimeout(DOMObserverTimer);
       }
-      DOMObserverTimer = setTimeout(function () {
+      DOMObserverTimer = setTimeout(() => {
         DOMObserver.disconnect();
         addSlayer();
         DOMObserver.observe(document.body, DOMObserverConfig);
@@ -245,4 +243,4 @@ GM_config.init(
   addSlayer();
   addConfig();
 
-}) ();
+})();
