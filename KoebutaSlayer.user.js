@@ -4,11 +4,12 @@
 // @description    Adds a button that eliminates evil replys to tweet details.
 // @description:ja ツイート詳細に声豚のリプライを抹殺するボタンを追加します。
 // @include        https://twitter.com/*
-// @version        2.0.3
+// @version        2.0.4
 // @require        https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @grant          GM_getValue
 // @grant          GM_setValue
 // @grant          GM_log
+// @grant          GM_registerMenuCommand
 // @license        MIT License
 // ==/UserScript==
 
@@ -17,19 +18,21 @@
 // 参考: Extract images for Twitter
 // https://greasyfork.org/ja/scripts/15271-extract-images-for-twitter
 
+'use strict';
+
 // 除外リスト(初期設定)
 const defaultWhitelistArray = [
-  'suzaki_aya',      'ibuking_1114', 'maaya_taso',      '0812asumikana',
-  'numakura_manami', '38kMarie',     'Yaskiyo_manager', 'kurapimk',
-  'kanekosanndesu',  'AyakaOhashi',  'Lynn_0601_',      'takamori_723',
-  'OnoSaki1126',     'nojomiy',      'akekodao',        'yuumin_uchiyama',
-  'marika_0222',     'Miho_Aaaa',    'osorasan703',     'fuchigami_mai',
-  'han_meg_han',     'Erietty_55',   'RiccaTachibana',  'tanezakiatsumi',
-  'yuuka_aisaka',    '0309akari',    'mikakokomatsu',   'shiori_izawa',
-  'TomoyoKurosawa',  'eerie_eery',   'mikami_shiori',   'reimatsuzaki',
-  'shimoda_asami',   'Uesakasumire', 'coloruri',        'yuichupunch',
-  'ErikoMatsui',     'ousakichiyo',  'nanjolno',        'Emiryun',
-  'HiRoMi_ig',       'makomorino',   'yukari_tamura'
+  '0309akari',      '0812asumikana',  '38kMarie',        'AyakaOhashi',
+  'Emiryun',        'Erietty_55',     'ErikoMatsui',     'HiRoMi_ig',
+  'Lynn_0601_',     'Miho_Aaaa',      'OnoSaki1126',     'RiccaTachibana',
+  'TomoyoKurosawa', 'Uesakasumire',   'Yaskiyo_manager', 'akekodao',
+  'coloruri',       'eerie_eery',     'fuchigami_mai',   'han_meg_han',
+  'ibuking_1114',   'kanekosanndesu', 'kurapimk',        'maaya_taso',
+  'makomorino',     'marika_0222',    'mikakokomatsu',   'mikami_shiori',
+  'nanjolno',       'nojomiy',        'numakura_manami', 'osorasan703',
+  'ousakichiyo',    'reimatsuzaki',   'shimoda_asami',   'shiori_izawa',
+  'suzaki_aya',     'takamori_723',   'tanezakiatsumi',  'yuichupunch',
+  'yukari_tamura',  'yuuka_aisaka',   'yuumin_uchiyama'
 ];
 
 // 初期設定
@@ -69,12 +72,15 @@ GM_config.init(
   }
 );
 
+GM_registerMenuCommand("抹殺設定", () => { GM_config.open(); });
+
 (() => {
 
   const processedList      = new WeakMap(),
         processedTweetList = new WeakMap();
 
-  let slayCount = 0; // ツイート抹殺数
+  let slayCount = 0, // ツイート抹殺数
+      isSlayed  = false;
 
   // 抹殺ボタンを作る
   const createSlayer = (tweetList) => {
@@ -99,7 +105,7 @@ GM_config.init(
       counter.style.color = 'darkred';
     });
     slayer.addEventListener('mouseleave', () => {
-      if(counter.textContent == '') {
+      if(!isSlayed) {
         icon.style.color    = '';
         counter.style.color = '';
       }
@@ -107,9 +113,10 @@ GM_config.init(
     slayer.addEventListener('click', () => {
       slayTweet(tweetList);
       if(slayCount != 0) {
+        isSlayed = true;
         // 抹殺したツイート数を更新
         setTimeout(() => {
-          document.getElementsByClassName('Slay-counter')[0].textContent = slayCount;
+          counter.textContent = slayCount;
         }, 500);
       }
     });
@@ -137,37 +144,6 @@ GM_config.init(
             tweet.appendChild(createSlayer(tweetList));
           }
         }
-      }
-    }
-  };
-
-  // 設定ボタンを作る
-  const createConfig = () => {
-    const config = document.createElement('li');
-    config.setAttribute('class', 'moments js-moments-tab');
-    config.innerHTML =
-    '<a role="button" href="#" class="js-nav js-tooltip js-dynamic-tooltip" ' +
-    'data-component-context="moments_nav" data-nav="moments" data-placement="bottom">' +
-      '<span class="Icon Icon--close Icon--large"></span>' +
-      '<span class="text">抹殺設定</span>'+
-    '</a>';
-    config.addEventListener('click', () => { GM_config.open(); });
-    return config;
-  };
-
-  // 設定ボタンを追加
-  const addConfig = () => {
-    const navList = document.getElementsByClassName('js-global-actions');
-    for (let i = 0, len = navList.length; i < len; i++) {
-      const nav = navList[i];
-      if(!processedList.has(nav)) {
-        // 画面遷移前のボタンが残った時に削除
-        const oldConfig = nav.getElementsByClassName('ProfileTweet-action--Slay--config')[0];
-        if(oldConfig)
-          oldConfig.remove();
-        // 登録
-        processedList.set(nav, 1);
-        nav.appendChild(createConfig());
       }
     }
   };
@@ -241,6 +217,5 @@ GM_config.init(
 
   // 初回起動
   addSlayer();
-  addConfig();
 
 })();
