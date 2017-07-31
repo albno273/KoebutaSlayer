@@ -4,7 +4,7 @@
 // @description    Adds a button that eliminates evil replys to tweet details.
 // @description:ja ツイート詳細に声豚のリプライを抹殺するボタンを追加します。
 // @include        https://twitter.com/*
-// @version        2.0.4
+// @version        2.1.0
 // @require        https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @grant          GM_getValue
 // @grant          GM_setValue
@@ -84,20 +84,19 @@ GM_registerMenuCommand("抹殺設定", () => { GM_config.open(); });
 
   // 抹殺ボタンを作る
   const createSlayer = (tweetList) => {
+    slayCount = 0;
     const slayer = document.createElement('div');
-    slayer.setAttribute('class', 'ProfileTweet-action js-toggleState ProfileTweet-action--Slay');
+    slayer.setAttribute('class', 'ProfileTweet-action ProfileTweet-action--Slay');
     slayer.innerHTML =
-    '<button class="ProfileTweet-actionButton js-actionButton js-actionSlay" type="button">' +
+      '<button class="ProfileTweet-actionButton js-actionButton js-actionSlay" type="button">' +
       '<div class="IconContainer js-tooltip" title="抹殺">' +
-        '<span class="Icon Icon--close"></span>' +
-        '<span class="u-hiddenVisually">抹殺</span>' +
+      '<span class="Icon Icon--medium Icon--close"></span>' +
+      '<span class="u-hiddenVisually">抹殺</span>' +
       '</div>' +
-      '<div class="IconTextContainer">' +
-        '<span class="ProfileTweet-actionCount ">' +
-          '<span class="ProfileTweet-actionCountForPresentation Slay-counter" aria-hidden="true"></span>' +
-        '</span>' +
-      '</div>' +
-    '</button>';
+      '<span class="ProfileTweet-actionCount ">' +
+      '<span class="ProfileTweet-actionCountForPresentation Slay-counter" aria-hidden="true"></span>' +
+      '</span>' +
+      '</button>';
     const icon    = slayer.getElementsByClassName('Icon')[0],
           counter = slayer.getElementsByClassName('Slay-counter')[0];
     slayer.addEventListener('mouseenter', () => {
@@ -183,9 +182,9 @@ GM_registerMenuCommand("抹殺設定", () => { GM_config.open(); });
     else if(behavior == 'ニンジャスレイヤー風') {
       tweet.getElementsByClassName('tweet-text')[0].textContent = 'アバーッ！';
       tweet.getElementsByClassName('fullname')[0].textContent   = 'Koebuta Slayer';
-      tweet.getElementsByClassName('username')[0].innerHTML     = '<s>@</s><b>koebutaslayer</b>';
+      tweet.getElementsByClassName('username')[0].innerHTML     = '@<b>koebutaslayer</b>';
       tweet.getElementsByClassName('js-action-profile-avatar')[0]
-        .setAttribute('src', 'https://pbs.twimg.com/profile_images/716042850903830528/PLNG3AVA.jpg');
+        .setAttribute('src', 'https://pbs.twimg.com/profile_images/876001170409439232/pHHfBGu3_400x400.jpg');
       const media = tweet.getElementsByClassName('AdaptiveMediaOuterContainer')[0];
       if(media)
         media.remove();
