@@ -8,10 +8,7 @@
 「素直に██です」というツイートを見た時に「抹殺しなければ」と思ったので作りました。 
 
 ## 動作確認環境
-Mozilla Firefox 54.0.1 / GreaseMonkey 3.11
-
-Firefox / GreaseMonkey であればおそらく問題なく動きます。  
-TamperMonkey は設定画面周りでまだ対応できていません。
+Mozilla Firefox Quantum / TamperMonkey 4.5.5533 
 
 ## 使用ガイド
 このスクリプトを導入すると、ホワイトリスト(後述)に含まれるアカウントのツイートを開いた際に「いいね」の右側に × 印の「抹殺」ボタンが出現します。
@@ -45,8 +42,7 @@ TamperMonkey は設定画面周りでまだ対応できていません。
 ![ニンジャスレイヤー風](https://cloud.githubusercontent.com/assets/19812219/23579126/14496db2-012a-11e7-8f08-fdc2fb692af0.gif)
 
 ## インストール方法
-① ブラウザにユーザースクリプトを使うためのアドオンを導入します。ブラウザごとに違うので[ここ](https://greasyfork.org/ja)を参照して導入してください。  
-<u>Tampermonkey だと設定ボタンがうまく働かないので Greasemonkey を推奨します。</u>  
+① ブラウザにユーザースクリプトを使うためのアドオンを導入します。ブラウザごとに違うので[ここ](https://greasyfork.org/ja)を参照して導入してください。    
 ② スクリプトを[ここ](https://greasyfork.org/ja/scripts/27681-koebutaslayer)からダウンロードします。  
 ③ 操作ガイドにしたがって使用してください。
 

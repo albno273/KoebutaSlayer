@@ -4,7 +4,7 @@
 // @description    Adds a button that eliminates evil replys to tweet details.
 // @description:ja ツイート詳細に声豚のリプライを抹殺するボタンを追加します。
 // @include        https://twitter.com/*
-// @version        2.1.0
+// @version        2.1.1
 // @require        https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @grant          GM_getValue
 // @grant          GM_setValue
@@ -72,7 +72,7 @@ GM_config.init(
   }
 );
 
-GM_registerMenuCommand("抹殺設定", () => { GM_config.open(); });
+GM_registerMenuCommand("抹殺設定", function () { GM_config.open(); });
 
 (() => {
 
